@@ -1,0 +1,51 @@
+---
+title: "ESM 244"
+author: "Bri Baker"
+date: "1/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(janitor)
+library(here)
+
+
+# For Part 1 (PCA)
+library(ggfortify) # For PCA biplot
+library(palmerpenguins)
+
+# For Part 2 (ggplot customization)
+library(readxl)
+library(gghighlight) # For useful highlighting
+library(lubridate) # For easier dates & times
+library(plotly) # Interactive graphs
+
+# For Part 3 (compound figures)
+library(patchwork)
+
+```
+
+## Part 1: PCA with penguins
+
+```{r}
+penguin_pca <- penguins %>% 
+  select(body_mass_g, ends_with("_mm")) %>% 
+  drop_na() %>% 
+  scale() %>% 
+  prcomp()
+
+penguin_complete <- penguins %>% 
+  drop_na(body_mass_g, ends_with("_mm"))
+
+
+autoplot(penguin_pca,
+         data = penguin_complete,
+         colour = "species",
+         loadings = T,
+         loadings.label = T) +
+  theme_minimal()
+```
+
