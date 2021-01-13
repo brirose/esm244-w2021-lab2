@@ -49,3 +49,78 @@ autoplot(penguin_pca,
   theme_minimal()
 ```
 
+## Part 2 ggplot 2 and other file types
+
+
+### excel files
+```{r}
+fish_noaa <- read_excel(here("data","foss_landings.xlsx")) %>% 
+  clean_names() %>% 
+  mutate(across(where(is.character), tolower),
+         nmfs_name = str_sub(nmfs_name, end = -4)) %>% 
+  filter(confidentiality == 'public')
+
+```
+
+grpah time
+
+```{r}
+fish_plot <- ggplot(fish_noaa, aes(x = year, y = pounds)) +
+  geom_line(aes(color = nmfs_name), show.legend = F) +
+  theme_minimal()
+
+ggplotly(fish_plot)
+
+ggplot(fish_noaa, aes(x = year, y = pounds), group = nmfs_name) +
+  geom_line() +
+  theme_minimal() +
+  gghighlight(nmfs_name == "tunas")
+
+ggplot(fish_noaa, aes(x = year, y = pounds), group = nmfs_name) +
+  geom_line(aes(color = nmfs_name)) +
+  theme_minimal() +
+  gghighlight(max(pounds) > 1e8)
+```
+
+### read in from url and mutate etc
+
+```{r}
+
+monroe_wt <- read_csv("https://data.bloomington.in.gov/dataset/2c81cfe3-62c2-46ed-8fcf-83c1880301d1/resource/13c8f7aa-af51-4008-80a9-56415c7c931e/download/mwtpdailyelectricitybclear.csv") %>% 
+  clean_names()
+
+```
+
+```{r}
+monroe_ts <- monroe_wt %>% 
+  mutate(date = mdy(date)) %>% 
+  mutate(record_month = month(date)) %>% 
+  mutate(month_name = month.abb[record_month]) %>% 
+  mutate(month_name = fct_reorder(month_name, record_month))
+
+ggplot(data = monroe_ts, aes(x = month_name, y = total_k_wh)) +
+  geom_jitter(aes(color = month_name), 
+              show.legend = FALSE,
+              alpha = 0.5, 
+              size = 0.3,
+              width = 0.2)
+```
+
+### Part 3: compund figures
+
+```{r}
+graph_a <- ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(aes(size = bill_length_mm, color = bill_depth_mm), show.legend = FALSE)
+
+graph_b <- ggplot(data = penguins, aes(x = species, y = flipper_length_mm)) +
+  geom_jitter(aes(color = flipper_length_mm), show.legend = FALSE)
+
+# | for side by side / for one over other
+
+graph_c <- (graph_a|graph_b) / fish_plot & theme_dark()
+
+graph_c
+
+ggsave(here("fig", "graph_c_bb.jpg"), width = 5, height = 6)
+```
+
